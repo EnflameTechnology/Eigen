@@ -23,10 +23,6 @@
   #pragma GCC diagnostic ignored "-Wdeprecated"
 #endif
 
-#if defined(__GNUC__) && (__GNUC__ >=9)
-  #pragma GCC diagnostic ignored "-Wdeprecated-copy"
-#endif
-
 #endif
 
 #include <valarray>

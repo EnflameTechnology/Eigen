@@ -300,7 +300,7 @@ struct abs2_impl_default<Scalar, true> // IsComplex
   EIGEN_DEVICE_FUNC
   static inline RealScalar run(const Scalar& x)
   {
-    return x.real()*x.real() + x.imag()*x.imag();
+    return real(x)*real(x) + imag(x)*imag(x);
   }
 };
 
@@ -326,17 +326,14 @@ struct abs2_retval
 ****************************************************************************/
 
 template<typename Scalar, bool IsComplex>
-struct norm1_default_impl;
-
-template<typename Scalar>
-struct norm1_default_impl<Scalar,true>
+struct norm1_default_impl
 {
   typedef typename NumTraits<Scalar>::Real RealScalar;
   EIGEN_DEVICE_FUNC
   static inline RealScalar run(const Scalar& x)
   {
     EIGEN_USING_STD_MATH(abs);
-    return abs(x.real()) + abs(x.imag());
+    return abs(real(x)) + abs(imag(x));
   }
 };
 
@@ -402,7 +399,6 @@ inline NewType cast(const OldType& x)
 #if EIGEN_HAS_CXX11_MATH
   template<typename Scalar>
   struct round_impl {
-    EIGEN_DEVICE_FUNC
     static inline Scalar run(const Scalar& x)
     {
       EIGEN_STATIC_ASSERT((!NumTraits<Scalar>::IsComplex), NUMERIC_TYPE_MUST_BE_REAL)
@@ -414,7 +410,6 @@ inline NewType cast(const OldType& x)
   template<typename Scalar>
   struct round_impl
   {
-    EIGEN_DEVICE_FUNC
     static inline Scalar run(const Scalar& x)
     {
       EIGEN_STATIC_ASSERT((!NumTraits<Scalar>::IsComplex), NUMERIC_TYPE_MUST_BE_REAL)
@@ -432,55 +427,12 @@ struct round_retval
 };
 
 /****************************************************************************
-* Implementation of rint                                                    *
-****************************************************************************/
-
-template<typename Scalar>
-struct rint_impl {
-  EIGEN_DEVICE_FUNC
-  static inline Scalar run(const Scalar& x)
-  {
-    EIGEN_STATIC_ASSERT((!NumTraits<Scalar>::IsComplex), NUMERIC_TYPE_MUST_BE_REAL)
-#if EIGEN_HAS_CXX11_MATH
-      EIGEN_USING_STD_MATH(rint);
-#endif
-    return rint(x);
-  }
-};
-
-#if !EIGEN_HAS_CXX11_MATH
-template<>
-struct rint_impl<double> {
-  EIGEN_DEVICE_FUNC
-  static inline double run(const double& x)
-  {
-    return ::rint(x);
-  }
-};
-template<>
-struct rint_impl<float> {
-  EIGEN_DEVICE_FUNC
-  static inline float run(const float& x)
-  {
-    return ::rintf(x);
-  }
-};
-#endif
-
-template<typename Scalar>
-struct rint_retval
-{
-  typedef Scalar type;
-};
-
-/****************************************************************************
 * Implementation of arg                                                     *
 ****************************************************************************/
 
 #if EIGEN_HAS_CXX11_MATH
   template<typename Scalar>
   struct arg_impl {
-    EIGEN_DEVICE_FUNC
     static inline Scalar run(const Scalar& x)
     {
       #if defined(EIGEN_HIP_DEVICE_COMPILE)
@@ -574,27 +526,7 @@ struct expm1_impl<std::complex<RealScalar> > {
   EIGEN_DEVICE_FUNC static inline std::complex<RealScalar> run(
       const std::complex<RealScalar>& x) {
     EIGEN_STATIC_ASSERT_NON_INTEGER(RealScalar)
-    RealScalar xr = x.real();
-    RealScalar xi = x.imag();
-    // expm1(z) = exp(z) - 1
-    //          = exp(x +  i * y) - 1
-    //          = exp(x) * (cos(y) + i * sin(y)) - 1
-    //          = exp(x) * cos(y) - 1 + i * exp(x) * sin(y)
-    // Imag(expm1(z)) = exp(x) * sin(y)
-    // Real(expm1(z)) = exp(x) * cos(y) - 1
-    //          = exp(x) * cos(y) - 1.
-    //          = expm1(x) + exp(x) * (cos(y) - 1)
-    //          = expm1(x) + exp(x) * (2 * sin(y / 2) ** 2)
-
-    // TODO better use numext::expm1 and numext::sin (but that would require forward declarations or moving this specialization down).
-    RealScalar erm1 = expm1_impl<RealScalar>::run(xr);
-    RealScalar er = erm1 + RealScalar(1.);
-    EIGEN_USING_STD_MATH(sin);
-    RealScalar sin2 = sin(xi / RealScalar(2.));
-    sin2 = sin2 * sin2;
-    RealScalar s = sin(xi);
-    RealScalar real_part = erm1 - RealScalar(2.) * er * sin2;
-    return std::complex<RealScalar>(real_part, er * s);
+    return std_fallback::expm1(x);
   }
 };
 
@@ -821,8 +753,8 @@ struct random_default_impl<Scalar, true, false>
 {
   static inline Scalar run(const Scalar& x, const Scalar& y)
   {
-    return Scalar(random(x.real(), y.real()),
-                  random(x.imag(), y.imag()));
+    return Scalar(random(real(x), real(y)),
+                  random(imag(x), imag(y)));
   }
   static inline Scalar run()
   {
@@ -959,6 +891,7 @@ template<typename T> EIGEN_DEVICE_FUNC bool isnan_impl(const std::complex<T>& x)
 template<typename T> EIGEN_DEVICE_FUNC bool isinf_impl(const std::complex<T>& x);
 
 template<typename T> T generic_fast_tanh_float(const T& a_x);
+
 } // end namespace internal
 
 /****************************************************************************
@@ -1238,13 +1171,6 @@ SYCL_SPECIALIZE_FLOATING_TYPES_UNARY_FUNC_RET_TYPE(isnan, isnan, bool)
 SYCL_SPECIALIZE_FLOATING_TYPES_UNARY_FUNC_RET_TYPE(isinf, isinf, bool)
 SYCL_SPECIALIZE_FLOATING_TYPES_UNARY_FUNC_RET_TYPE(isfinite, isfinite, bool)
 #endif
-
-template<typename Scalar>
-EIGEN_DEVICE_FUNC
-inline EIGEN_MATHFUNC_RETVAL(rint, Scalar) rint(const Scalar& x)
-{
-  return EIGEN_MATHFUNC_IMPL(rint, Scalar)::run(x);
-}
 
 template<typename Scalar>
 EIGEN_DEVICE_FUNC

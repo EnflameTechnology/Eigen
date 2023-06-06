@@ -96,42 +96,39 @@ template<> struct is_arithmetic<__m128d> { enum { value = true }; };
 // Use the packet_traits defined in AVX/PacketMath.h instead if we're going
 // to leverage AVX instructions.
 #ifndef EIGEN_VECTORIZE_AVX
-template <>
-struct packet_traits<float> : default_packet_traits {
+template<> struct packet_traits<float>  : default_packet_traits
+{
   typedef Packet4f type;
   typedef Packet4f half;
   enum {
     Vectorizable = 1,
     AlignedOnScalar = 1,
-    size = 4,
+    size=4,
     HasHalfPacket = 0,
 
-    HasDiv = 1,
-    HasSin = EIGEN_FAST_MATH,
-    HasCos = EIGEN_FAST_MATH,
-    HasLog = 1,
-    HasLog1p = 1,
-    HasExpm1 = 1,
+    HasDiv  = 1,
+    HasSin  = EIGEN_FAST_MATH,
+    HasCos  = EIGEN_FAST_MATH,
+    HasLog  = 1,
+    HasLog1p  = 1,
+    HasExpm1  = 1,
     HasNdtri = 1,
-    HasExp = 1,
-    HasBessel = 1,
+    HasExp  = 1,
     HasSqrt = 1,
     HasRsqrt = 1,
-    HasTanh = EIGEN_FAST_MATH,
-    HasErf = EIGEN_FAST_MATH,
+    HasTanh  = EIGEN_FAST_MATH,
     HasBlend = 1,
     HasFloor = 1
 
 #ifdef EIGEN_VECTORIZE_SSE4_1
     ,
-    HasRint = 1,
     HasRound = 1,
     HasCeil = 1
 #endif
   };
 };
-template <>
-struct packet_traits<double> : default_packet_traits {
+template<> struct packet_traits<double> : default_packet_traits
+{
   typedef Packet2d type;
   typedef Packet2d half;
   enum {
@@ -149,7 +146,6 @@ struct packet_traits<double> : default_packet_traits {
 #ifdef EIGEN_VECTORIZE_SSE4_1
     ,
     HasRound = 1,
-    HasRint = 1,
     HasFloor = 1,
     HasCeil = 1
 #endif
@@ -386,17 +382,10 @@ template<> EIGEN_STRONG_INLINE Packet4i pmax<Packet4i>(const Packet4i& a, const 
 
 template<> EIGEN_STRONG_INLINE Packet4f pcmp_le(const Packet4f& a, const Packet4f& b) { return _mm_cmple_ps(a,b); }
 template<> EIGEN_STRONG_INLINE Packet4f pcmp_lt(const Packet4f& a, const Packet4f& b) { return _mm_cmplt_ps(a,b); }
-template<> EIGEN_STRONG_INLINE Packet4f pcmp_lt_or_nan(const Packet4f& a, const Packet4f& b) { return _mm_cmpnge_ps(a,b); }
 template<> EIGEN_STRONG_INLINE Packet4f pcmp_eq(const Packet4f& a, const Packet4f& b) { return _mm_cmpeq_ps(a,b); }
-
-template<> EIGEN_STRONG_INLINE Packet2d pcmp_le(const Packet2d& a, const Packet2d& b) { return _mm_cmple_pd(a,b); }
-template<> EIGEN_STRONG_INLINE Packet2d pcmp_lt(const Packet2d& a, const Packet2d& b) { return _mm_cmplt_pd(a,b); }
-template<> EIGEN_STRONG_INLINE Packet2d pcmp_lt_or_nan(const Packet2d& a, const Packet2d& b) { return _mm_cmpnge_pd(a,b); }
-template<> EIGEN_STRONG_INLINE Packet2d pcmp_eq(const Packet2d& a, const Packet2d& b) { return _mm_cmpeq_pd(a,b); }
-
-template<> EIGEN_STRONG_INLINE Packet4i pcmp_lt(const Packet4i& a, const Packet4i& b) { return _mm_cmplt_epi32(a,b); }
 template<> EIGEN_STRONG_INLINE Packet4i pcmp_eq(const Packet4i& a, const Packet4i& b) { return _mm_cmpeq_epi32(a,b); }
-
+template<> EIGEN_STRONG_INLINE Packet2d pcmp_eq(const Packet2d& a, const Packet2d& b) { return _mm_cmpeq_pd(a,b); }
+template<> EIGEN_STRONG_INLINE Packet4f pcmp_lt_or_nan(const Packet4f& a, const Packet4f& b) { return _mm_cmpnge_ps(a,b); }
 
 template<> EIGEN_STRONG_INLINE Packet4i ptrue<Packet4i>(const Packet4i& a) { return _mm_cmpeq_epi32(a, a); }
 template<> EIGEN_STRONG_INLINE Packet4f
@@ -430,23 +419,8 @@ template<int N> EIGEN_STRONG_INLINE Packet4i pshiftright(Packet4i a) { return _m
 template<int N> EIGEN_STRONG_INLINE Packet4i pshiftleft(Packet4i a) { return _mm_slli_epi32(a,N); }
 
 #ifdef EIGEN_VECTORIZE_SSE4_1
-template<> EIGEN_STRONG_INLINE Packet4f pround<Packet4f>(const Packet4f& a)
-{
-  // Unfortunatly _mm_round_ps doesn't have a rounding mode to implement numext::round.
-  const Packet4f mask = pset1frombits<Packet4f>(0x80000000u);
-  const Packet4f prev0dot5 = pset1frombits<Packet4f>(0x3EFFFFFFu);
-  return _mm_round_ps(padd(por(pand(a, mask), prev0dot5), a), _MM_FROUND_TO_ZERO);
-}
-
-template<> EIGEN_STRONG_INLINE Packet2d pround<Packet2d>(const Packet2d& a)
-{
-  const Packet2d mask = _mm_castsi128_pd(_mm_set_epi64x(0x8000000000000000ull, 0x8000000000000000ull));
-  const Packet2d prev0dot5 = _mm_castsi128_pd(_mm_set_epi64x(0x3FDFFFFFFFFFFFFFull, 0x3FDFFFFFFFFFFFFFull));
-  return _mm_round_pd(padd(por(pand(a, mask), prev0dot5), a), _MM_FROUND_TO_ZERO);
-}
-
-template<> EIGEN_STRONG_INLINE Packet4f print<Packet4f>(const Packet4f& a) { return _mm_round_ps(a, _MM_FROUND_CUR_DIRECTION); }
-template<> EIGEN_STRONG_INLINE Packet2d print<Packet2d>(const Packet2d& a) { return _mm_round_pd(a, _MM_FROUND_CUR_DIRECTION); }
+template<> EIGEN_STRONG_INLINE Packet4f pround<Packet4f>(const Packet4f& a) { return _mm_round_ps(a, 0); }
+template<> EIGEN_STRONG_INLINE Packet2d pround<Packet2d>(const Packet2d& a) { return _mm_round_pd(a, 0); }
 
 template<> EIGEN_STRONG_INLINE Packet4f pceil<Packet4f>(const Packet4f& a) { return _mm_ceil_ps(a); }
 template<> EIGEN_STRONG_INLINE Packet2d pceil<Packet2d>(const Packet2d& a) { return _mm_ceil_pd(a); }

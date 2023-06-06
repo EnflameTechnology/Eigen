@@ -296,7 +296,6 @@ template<typename ArrayType> void array_real(const ArrayType& m)
 
   VERIFY_IS_APPROX(m1.arg(), arg(m1));
   VERIFY_IS_APPROX(m1.round(), round(m1));
-  VERIFY_IS_APPROX(m1.rint(), rint(m1));
   VERIFY_IS_APPROX(m1.floor(), floor(m1));
   VERIFY_IS_APPROX(m1.ceil(), ceil(m1));
   VERIFY((m1.isNaN() == (Eigen::isnan)(m1)).all());
@@ -332,11 +331,6 @@ template<typename ArrayType> void array_real(const ArrayType& m)
   VERIFY_IS_APPROX(logistic(m1), (1.0/(1.0+exp(-m1))));
   VERIFY_IS_APPROX(arg(m1), ((m1<0).template cast<Scalar>())*std::acos(-1.0));
   VERIFY((round(m1) <= ceil(m1) && round(m1) >= floor(m1)).all());
-  VERIFY((rint(m1) <= ceil(m1) && rint(m1) >= floor(m1)).all());
-  VERIFY(((ceil(m1) - round(m1)) <= Scalar(0.5) || (round(m1) - floor(m1)) <= Scalar(0.5)).all());
-  VERIFY(((ceil(m1) - round(m1)) <= Scalar(1.0) && (round(m1) - floor(m1)) <= Scalar(1.0)).all());
-  VERIFY(((ceil(m1) - rint(m1)) <= Scalar(0.5) || (rint(m1) - floor(m1)) <= Scalar(0.5)).all());
-  VERIFY(((ceil(m1) - rint(m1)) <= Scalar(1.0) && (rint(m1) - floor(m1)) <= Scalar(1.0)).all());
   VERIFY((Eigen::isnan)((m1*0.0)/0.0).all());
   VERIFY((Eigen::isinf)(m4/0.0).all());
   VERIFY(((Eigen::isfinite)(m1) && (!(Eigen::isfinite)(m1*0.0/0.0)) && (!(Eigen::isfinite)(m4/0.0))).all());
@@ -348,7 +342,7 @@ template<typename ArrayType> void array_real(const ArrayType& m)
   VERIFY_IS_APPROX(m1.sign() * m1.abs(), m1);
 
   VERIFY_IS_APPROX(numext::abs2(numext::real(m1)) + numext::abs2(numext::imag(m1)), numext::abs2(m1));
-  VERIFY_IS_APPROX(numext::abs2(Eigen::real(m1)) + numext::abs2(Eigen::imag(m1)), numext::abs2(m1));
+  VERIFY_IS_APPROX(numext::abs2(real(m1)) + numext::abs2(imag(m1)), numext::abs2(m1));
   if(!NumTraits<Scalar>::IsComplex)
     VERIFY_IS_APPROX(numext::real(m1), m1);
 
@@ -435,11 +429,6 @@ template<typename ArrayType> void array_complex(const ArrayType& m)
   VERIFY_IS_APPROX(m1.exp(), exp(m1));
   VERIFY_IS_APPROX(m1.exp() / m2.exp(),(m1-m2).exp());
 
-  VERIFY_IS_APPROX(m1.expm1(), expm1(m1));
-  VERIFY_IS_APPROX(expm1(m1), exp(m1) - 1.);
-  // Check for larger magnitude complex numbers that expm1 matches exp - 1.
-  VERIFY_IS_APPROX(expm1(10. * m1), exp(10. * m1) - 1.);
-
   VERIFY_IS_APPROX(sinh(m1), 0.5*(exp(m1)-exp(-m1)));
   VERIFY_IS_APPROX(cosh(m1), 0.5*(exp(m1)+exp(-m1)));
   VERIFY_IS_APPROX(tanh(m1), (0.5*(exp(m1)-exp(-m1)))/(0.5*(exp(m1)+exp(-m1))));
@@ -447,7 +436,7 @@ template<typename ArrayType> void array_complex(const ArrayType& m)
 
   for (Index i = 0; i < m.rows(); ++i)
     for (Index j = 0; j < m.cols(); ++j)
-      m3(i,j) = std::atan2(m1(i,j).imag(), m1(i,j).real());
+      m3(i,j) = std::atan2(imag(m1(i,j)), real(m1(i,j)));
   VERIFY_IS_APPROX(arg(m1), m3);
 
   std::complex<RealScalar> zero(0.0,0.0);
@@ -474,7 +463,7 @@ template<typename ArrayType> void array_complex(const ArrayType& m)
 
   VERIFY_IS_APPROX(inverse(inverse(m1)),m1);
   VERIFY_IS_APPROX(conj(m1.conjugate()), m1);
-  VERIFY_IS_APPROX(abs(m1), sqrt(square(m1.real())+square(m1.imag())));
+  VERIFY_IS_APPROX(abs(m1), sqrt(square(real(m1))+square(imag(m1))));
   VERIFY_IS_APPROX(abs(m1), sqrt(abs2(m1)));
   VERIFY_IS_APPROX(log10(m1), log(m1)/log(10));
 

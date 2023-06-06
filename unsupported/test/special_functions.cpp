@@ -7,7 +7,6 @@
 // Public License v. 2.0. If a copy of the MPL was not distributed
 // with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-#include <limits.h>
 #include "main.h"
 #include "../Eigen/SpecialFunctions"
 
@@ -75,7 +74,6 @@ template<typename ArrayType> void array_special_functions()
       ArrayType gamma_a_x = Eigen::igamma(a, x) * a.lgamma().exp();
       ArrayType gamma_a_m1_x = Eigen::igamma(a_m1, x) * a_m1.lgamma().exp();
 
-
       // Gamma(a, 0) == Gamma(a)
       VERIFY_IS_APPROX(Eigen::igammac(a, zero), one);
 
@@ -87,19 +85,6 @@ template<typename ArrayType> void array_special_functions()
 
       // gamma(a, x) == (a - 1) * gamma(a-1, x) - x^(a-1) * exp(-x)
       VERIFY_IS_APPROX(gamma_a_x, (a - 1) * gamma_a_m1_x - x.pow(a-1) * (-x).exp());
-    }
-    {
-      // Verify for large a and x that values are between 0 and 1.
-      ArrayType m1 = ArrayType::Random(rows,cols);
-      ArrayType m2 = ArrayType::Random(rows,cols);
-      Scalar max_exponent = std::numeric_limits<Scalar>::max_exponent10;
-      ArrayType a = m1.abs() *  pow(10., max_exponent - 1);
-      ArrayType x = m2.abs() *  pow(10., max_exponent - 1);
-      for (int i = 0; i < a.size(); ++i) {
-        Scalar igam = numext::igamma(a(i), x(i));
-        VERIFY(0 <= igam);
-        VERIFY(igam <= 1);
-      }
     }
 
     {
@@ -372,7 +357,47 @@ template<typename ArrayType> void array_special_functions()
   }
 #endif  // EIGEN_HAS_C99_MATH
 
-    /* Code to generate the data for the following two test cases.
+  // Test Bessel function i0e. Reference results obtained with SciPy.
+  {
+    ArrayType x(21);
+    ArrayType expected(21);
+    ArrayType res(21);
+
+    x << -20.0, -18.0, -16.0, -14.0, -12.0, -10.0, -8.0, -6.0, -4.0, -2.0, 0.0,
+        2.0, 4.0, 6.0, 8.0, 10.0, 12.0, 14.0, 16.0, 18.0, 20.0;
+
+    expected << 0.0897803118848, 0.0947062952128, 0.100544127361,
+        0.107615251671, 0.116426221213, 0.127833337163, 0.143431781857,
+        0.16665743264, 0.207001921224, 0.308508322554, 1.0, 0.308508322554,
+        0.207001921224, 0.16665743264, 0.143431781857, 0.127833337163,
+        0.116426221213, 0.107615251671, 0.100544127361, 0.0947062952128,
+        0.0897803118848;
+
+    CALL_SUBTEST(res = i0e(x);
+                 verify_component_wise(res, expected););
+  }
+
+  // Test Bessel function i1e. Reference results obtained with SciPy.
+  {
+    ArrayType x(21);
+    ArrayType expected(21);
+    ArrayType res(21);
+
+    x << -20.0, -18.0, -16.0, -14.0, -12.0, -10.0, -8.0, -6.0, -4.0, -2.0, 0.0,
+        2.0, 4.0, 6.0, 8.0, 10.0, 12.0, 14.0, 16.0, 18.0, 20.0;
+
+    expected << -0.0875062221833, -0.092036796872, -0.0973496147565,
+        -0.103697667463, -0.11146429929, -0.121262681384, -0.134142493293,
+        -0.152051459309, -0.178750839502, -0.215269289249, 0.0, 0.215269289249,
+        0.178750839502, 0.152051459309, 0.134142493293, 0.121262681384,
+        0.11146429929, 0.103697667463, 0.0973496147565, 0.092036796872,
+        0.0875062221833;
+
+    CALL_SUBTEST(res = i1e(x);
+                 verify_component_wise(res, expected););
+  }
+
+  /* Code to generate the data for the following two test cases.
     N = 5
     np.random.seed(3)
 

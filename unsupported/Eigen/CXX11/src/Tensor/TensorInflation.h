@@ -99,10 +99,6 @@ struct TensorEvaluator<const TensorInflationOp<Strides, ArgType>, Device>
     RawAccess = false
   };
 
-  //===- Tensor block evaluation strategy (see TensorBlock.h) -------------===//
-  typedef internal::TensorBlockNotImplemented TensorBlock;
-  //===--------------------------------------------------------------------===//
-
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE TensorEvaluator(const XprType& op, const Device& device)
       : m_impl(op.expression(), device), m_strides(op.strides())
   {

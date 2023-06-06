@@ -12,10 +12,6 @@
 
 #include <ostream>
 
-#if EIGEN_COMP_GNUC
-#pragma GCC diagnostic ignored "-Wshadow"
-#endif
-
 #ifndef EIGEN_TEST_ANNOYING_SCALAR_DONT_THROW
 struct my_exception
 {

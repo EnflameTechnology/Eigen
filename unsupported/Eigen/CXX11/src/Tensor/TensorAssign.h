@@ -116,13 +116,9 @@ struct TensorEvaluator<const TensorAssignOp<LeftArgType, RightArgType>, Device>
     RawAccess         = TensorEvaluator<LeftArgType, Device>::RawAccess
   };
 
-  //===- Tensor block evaluation strategy (see TensorBlock.h) -------------===//
-  typedef internal::TensorBlockDescriptor<NumDims, Index> TensorBlockDesc;
-  typedef internal::TensorBlockScratchAllocator<Device> TensorBlockScratch;
-
-  typedef typename TensorEvaluator<const RightArgType, Device>::TensorBlock
-      RightTensorBlock;
-  //===--------------------------------------------------------------------===//
+  typedef typename internal::TensorBlock<
+      typename internal::remove_const<Scalar>::type, Index, NumDims, Layout>
+      TensorBlock;
 
   EIGEN_DEVICE_FUNC TensorEvaluator(const XprType& op, const Device& device) :
       m_leftImpl(op.lhsExpression(), device),
@@ -200,32 +196,24 @@ struct TensorEvaluator<const TensorAssignOp<LeftArgType, RightArgType>, Device>
            TensorOpCost(0, sizeof(CoeffReturnType), 0, vectorized, PacketSize);
   }
 
-  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE
-  internal::TensorBlockResourceRequirements getResourceRequirements() const {
-    return internal::TensorBlockResourceRequirements::merge(
-        m_leftImpl.getResourceRequirements(),
-        m_rightImpl.getResourceRequirements());
+  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE void getResourceRequirements(
+      std::vector<internal::TensorOpResourceRequirements>* resources) const {
+    m_leftImpl.getResourceRequirements(resources);
+    m_rightImpl.getResourceRequirements(resources);
   }
 
-  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE void evalBlock(
-      TensorBlockDesc& desc, TensorBlockScratch& scratch) {
+  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE void evalBlock(TensorBlock* block) {
     if (TensorEvaluator<LeftArgType, Device>::RawAccess &&
         m_leftImpl.data() != NULL) {
-      // If destination has raw data access, we pass it as a potential
-      // destination for a block descriptor evaluation.
-      desc.template AddDestinationBuffer<Layout>(
-          /*dst_base=*/m_leftImpl.data() + desc.offset(),
-          /*dst_strides=*/internal::strides<Layout>(m_leftImpl.dimensions()));
+      TensorBlock left_block(block->first_coeff_index(), block->block_sizes(),
+                             block->tensor_strides(), block->tensor_strides(),
+                             m_leftImpl.data() + block->first_coeff_index());
+      m_rightImpl.block(&left_block);
+    } else {
+      m_rightImpl.block(block);
+      m_leftImpl.writeBlock(*block);
     }
-
-    RightTensorBlock block = m_rightImpl.block(desc, scratch, /*root_of_expr_ast=*/true);
-    // If block was evaluated into a destination, there is no need to do assignment.
-    if (block.kind() != internal::TensorBlockKind::kMaterializedInOutput) {
-      m_leftImpl.writeBlock(desc, block);
-    }
-    block.cleanup();
   }
-
 #ifdef EIGEN_USE_SYCL
   // binding placeholder accessors to a command group handler for SYCL
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE void bind(cl::sycl::handler &cgh) const {

@@ -91,11 +91,6 @@
   #define isfinite(X) please_protect_your_isfinite_with_parentheses
 #endif
 
-
-// test possible conflicts
-struct real {};
-struct imag {};
-
 #ifdef M_PI
 #undef M_PI
 #endif

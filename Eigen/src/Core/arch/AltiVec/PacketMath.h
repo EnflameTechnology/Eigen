@@ -120,27 +120,27 @@ static Packet16uc p16uc_COMPLEX32_REV2 = vec_sld(p16uc_PSET64_HI, p16uc_PSET64_L
   #define EIGEN_PPC_PREFETCH(ADDR) asm( "   dcbt [%[addr]]\n" :: [addr] "r" (ADDR) : "cc" );
 #endif
 
-template <>
-struct packet_traits<float> : default_packet_traits {
+template<> struct packet_traits<float>  : default_packet_traits
+{
   typedef Packet4f type;
   typedef Packet4f half;
   enum {
     Vectorizable = 1,
     AlignedOnScalar = 1,
-    size = 4,
+    size=4,
     HasHalfPacket = 1,
 
-    HasAdd = 1,
-    HasSub = 1,
-    HasMul = 1,
-    HasDiv = 1,
-    HasMin = 1,
-    HasMax = 1,
-    HasAbs = 1,
-    HasSin = EIGEN_FAST_MATH,
-    HasCos = EIGEN_FAST_MATH,
-    HasLog = 1,
-    HasExp = 1,
+    HasAdd  = 1,
+    HasSub  = 1,
+    HasMul  = 1,
+    HasDiv  = 1,
+    HasMin  = 1,
+    HasMax  = 1,
+    HasAbs  = 1,
+    HasSin  = EIGEN_FAST_MATH,
+    HasCos  = EIGEN_FAST_MATH,
+    HasLog  = 1,
+    HasExp  = 1,
 #ifdef __VSX__
     HasSqrt = 1,
 #if !EIGEN_COMP_CLANG
@@ -151,8 +151,6 @@ struct packet_traits<float> : default_packet_traits {
 #else
     HasSqrt = 0,
     HasRsqrt = 0,
-    HasTanh = EIGEN_FAST_MATH,
-    HasErf = EIGEN_FAST_MATH,
 #endif
     HasRound = 1,
     HasFloor = 1,
@@ -161,8 +159,8 @@ struct packet_traits<float> : default_packet_traits {
     HasBlend = 1
   };
 };
-template <>
-struct packet_traits<int> : default_packet_traits {
+template<> struct packet_traits<int>    : default_packet_traits
+{
   typedef Packet4i type;
   typedef Packet4i half;
   enum {
@@ -179,6 +177,7 @@ struct packet_traits<int> : default_packet_traits {
   };
 };
 
+
 template<> struct unpacket_traits<Packet4f>
 {
   typedef float     type;
@@ -190,7 +189,7 @@ template<> struct unpacket_traits<Packet4i>
 {
   typedef int       type;
   typedef Packet4i  half;
-  enum {size=4, alignment=Aligned16, vectorizable=true, masked_load_available=false, masked_store_available=false};
+  enum {size=4, alignment=Aligned16, vectorizable=false, masked_load_available=false, masked_store_available=false};
 };
 
 inline std::ostream & operator <<(std::ostream & s, const Packet16uc & v)

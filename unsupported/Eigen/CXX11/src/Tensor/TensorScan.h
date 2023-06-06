@@ -106,10 +106,6 @@ struct TensorEvaluator<const TensorScanOp<Op, ArgType>, Device> {
     RawAccess = true
   };
 
-  //===- Tensor block evaluation strategy (see TensorBlock.h) -------------===//
-  typedef internal::TensorBlockNotImplemented TensorBlock;
-  //===--------------------------------------------------------------------===//
-
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE TensorEvaluator(const XprType& op,
                                                         const Device& device)
       : m_impl(op.expression(), device),

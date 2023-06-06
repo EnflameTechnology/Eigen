@@ -28,7 +28,7 @@ if(EIGEN_TEST_EXTERNAL_BLAS)
   message(STATUS "BLAS_COMPILER_FLAGS: ${BLAS_COMPILER_FLAGS}")
   add_definitions("-DEIGEN_USE_BLAS") # is adding  ${BLAS_COMPILER_FLAGS} necessary?
   list(APPEND EXTERNAL_LIBS "${BLAS_LIBRARIES}")
-endif()
+endif(EIGEN_TEST_EXTERNAL_BLAS)
 
 # configure blas/lapack (use Eigen's ones)
 set(EIGEN_BLAS_LIBRARIES eigen_blas)
@@ -39,10 +39,10 @@ if(EIGEN_TEST_MATRIX_DIR)
   if(NOT WIN32)
     message(STATUS "Test realworld sparse matrices: ${EIGEN_TEST_MATRIX_DIR}")
     add_definitions( -DTEST_REAL_CASES="${EIGEN_TEST_MATRIX_DIR}" )
-  else()
+  else(NOT WIN32)
     message(STATUS "REAL CASES CAN NOT BE CURRENTLY TESTED ON WIN32")
-  endif()
-endif()
+  endif(NOT WIN32)
+endif(EIGEN_TEST_MATRIX_DIR)
 
 set(SPARSE_LIBS " ")
 
@@ -110,9 +110,9 @@ if(PASTIX_FOUND AND PASTIX_pastix_nompi.h_INCLUDE_DIRS)
   elseif(METIS_FOUND)
     include_directories(${METIS_INCLUDE_DIRS})
     set(PASTIX_LIBRARIES ${PASTIX_LIBRARIES} ${METIS_LIBRARIES})
-  else()
+  else(SCOTCH_FOUND)
     ei_add_property(EIGEN_MISSING_BACKENDS  "PaStiX, ")
-  endif()
+  endif(SCOTCH_FOUND)
   set(SPARSE_LIBS ${SPARSE_LIBS} ${PASTIX_LIBRARIES_DEP} ${ORDERING_LIBRARIES})
   set(PASTIX_ALL_LIBS ${PASTIX_LIBRARIES_DEP})
   ei_add_property(EIGEN_TESTED_BACKENDS  "PaStiX, ")
@@ -148,11 +148,11 @@ if(NOT EIGEN_TEST_NOQT)
   else()
     ei_add_property(EIGEN_MISSING_BACKENDS  "Qt4 support, ")
   endif()
-endif()
+endif(NOT EIGEN_TEST_NOQT)
 
 if(TEST_LIB)
   add_definitions("-DEIGEN_EXTERN_INSTANTIATIONS=1")
-endif()
+endif(TEST_LIB)
 
 set_property(GLOBAL PROPERTY EIGEN_CURRENT_SUBPROJECT "Official")
 add_custom_target(BuildOfficial)
@@ -167,7 +167,6 @@ ei_add_test(first_aligned)
 ei_add_test(type_alias)
 ei_add_test(nullary)
 ei_add_test(mixingtypes)
-ei_add_test(io)
 ei_add_test(packetmath "-DEIGEN_FAST_MATH=1")
 ei_add_test(unalignedassert)
 ei_add_test(vectorization_logic)
@@ -312,7 +311,7 @@ ei_add_test(fastmath " ${EIGEN_FASTMATH_FLAGS} ")
 
 if(QT4_FOUND)
   ei_add_test(qtvector "" "${QT_QTCORE_LIBRARY}")
-endif()
+endif(QT4_FOUND)
 
 if(UMFPACK_FOUND)
   ei_add_test(umfpack_support "" "${UMFPACK_ALL_LIBS}")
@@ -406,9 +405,9 @@ if(CUDA_FOUND)
   
   unset(EIGEN_ADD_TEST_FILENAME_EXTENSION)
 
-endif()
+endif(CUDA_FOUND)
 
-endif()
+endif(EIGEN_TEST_CUDA)
 
 
 # HIP unit tests
@@ -440,7 +439,7 @@ if (EIGEN_TEST_HIP)
 	message(FATAL_ERROR "Unknown HIP_PLATFORM = ${HIP_PLATFORM}")
       endif()
       
-    endif()
+    endif(HIP_FOUND)
     
   else ()
 
@@ -448,9 +447,9 @@ if (EIGEN_TEST_HIP)
     
   endif()
     
-endif()
+endif(EIGEN_TEST_HIP)
 
 option(EIGEN_TEST_BUILD_DOCUMENTATION "Test building the doxygen documentation" OFF)
-if(EIGEN_TEST_BUILD_DOCUMENTATION)
+IF(EIGEN_TEST_BUILD_DOCUMENTATION)
   add_dependencies(buildtests doc)
-endif()
+ENDIF()
